@@ -1,0 +1,30 @@
+## Program shortcuts
+alias am='alsamixer'
+alias df='df -h'
+alias ec='emacsclient -c'
+alias ping='ping -c 3'
+alias pingle='ping www.google.com'
+alias rc='rsync -Prh'
+alias x='startx'
+
+## Aptitude
+alias ai='sudo apt install'
+alias ar='sudo apt remove'
+alias as='apt search'
+alias ash='apt show'
+alias au='sudo apt update && sudo apt upgrade'
+alias aur='sudo apt-get autoremove'
+
+## Pacman
+# alias pc='sudo pacmatic'
+# alias pacman='pacmatic'
+# alias pi='sudo pacmatic -S'
+# alias ps='pacmatic -Ss'
+# alias pr='sudo pacmatic -R'
+
+## System commands
+alias reboot='sudo reboot'
+alias off='sudo poweroff'
+
+## Shell commands
+alias q='exit'

@@ -1,0 +1,15 @@
+alias ai sudo apt install $*
+alias ar sudo apt remove $*
+alias as apt search $*
+alias ash apt show $*
+alias au sudo apt update && sudo apt upgrade
+alias aur sudo apt-get autoremove
+alias d dired $*
+alias df df -h
+alias ff find-file $*
+alias l ls -alh
+alias ping ping -c 3 $*
+alias pingle ping www.google.com
+alias q exit
+alias rc rsync -Prh $*
+alias sudo eshell/sudo $*
