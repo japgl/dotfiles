@@ -204,7 +204,7 @@ directory to make multiple eshell windows easier."
 
   :config
   (setq eshell-prefer-lisp-functions t
-	eshell-prefer-lisp-variables t))
+        eshell-prefer-lisp-variables t))
 
 (use-package doc-view
   :bind (:map doc-view-mode-map
@@ -276,7 +276,7 @@ directory to make multiple eshell windows easier."
 
               ("'" . bookmark-bmenu-list)
 
-              ("/"   . swiper) ;;isearch-forward)
+              ("/"   . isearch-forward) ;;isearch-forward)
               ("P"   . image-dired)
 
               ("C"   . dired-rsync)
@@ -293,6 +293,7 @@ directory to make multiple eshell windows easier."
         (start-process "default-app" nil "xdg-open" lawlist-filename))))
 
   (defun dired-rsync (dest)
+    "Copy files using rsync."
     (interactive
      (list
       (expand-file-name
@@ -391,6 +392,9 @@ directory to make multiple eshell windows easier."
 
   (add-hook 'image-mode-hook #'show-image-dimensions-in-mode-line))
 
+(use-package magit
+  :bind (("C-x M-g" . magit-status)))
+
 (use-package org
   :preface
   (defun org-latex-export-to-pdf-async ()
@@ -403,8 +407,7 @@ directory to make multiple eshell windows easier."
               ("C-c p" . org-latex-export-to-pdf-async ))
 
   :config
-  (setq org-latex-pdf-process
-        '("latexmk -pdflatex='pdflatex -interaction nonstopmode' -pdf -bibtex -f %f")) ; this should get bibtex files working
+  (setq 
 
   (setq-default org-startup-indented t) ;; Start org mode in indented mode
 
@@ -416,32 +419,26 @@ directory to make multiple eshell windows easier."
 
   ;;  (require 'org-bullets)                ;; Better header bullets
 
-  (setq org-hide-leading-stars t)
+  (setq org-hide-leading-stars t
+        org-export-html-style-include-scripts nil
+        org-export-html-style-include-default nil
+        org-export-html-style "<link rel=\"stylesheet\" type=\"text/css\" href=\"org-style.css\" />"
+	org-latex-pdf-process '("latexmk -pdflatex='pdflatex -interaction nonstopmode' -pdf -bibtex -f %f") ; this should get bibtex files working
+        org-agenda-files '("~/org/master.org")
+        org-log-repeat "note"
+        org-publish-project-alist '(("html"
+                                     :base-directory "~/org/"
+                                     :base-extension "org"
+                                     :publishing-directory "~/org/exports"
+                                     :publishing-function org-publish-org-to-html)
+                                    ("pdf"
+                                     :base-directory "~/org/"
+                                     :base-extension "org"
+                                     :publishing-directory "~/org/exports"
+                                     :publishing-function org-publish-org-to-pdf)
+                                    ("all" :components ("html" "pdf"))))
 
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
-
-  (setq org-export-html-style-include-scripts nil
-        org-export-html-style-include-default nil)
-
-  (setq org-export-html-style
-        "<link rel=\"stylesheet\" type=\"text/css\" href=\"org-style.css\" />")
-
-  (setq org-publish-project-alist
-        '(("html"
-           :base-directory "~/org/"
-           :base-extension "org"
-           :publishing-directory "~/org/exports"
-           :publishing-function org-publish-org-to-html)
-          ("pdf"
-           :base-directory "~/org/"
-           :base-extension "org"
-           :publishing-directory "~/org/exports"
-           :publishing-function org-publish-org-to-pdf)
-          ("all" :components ("html" "pdf"))))
-
-  (setq org-agenda-files '("~/org/master.org")
-        org-log-repeat "note")
-
   ;; Make windmove work in org-mode:
   (add-hook 'org-shiftup-final-hook 'windmove-up)
   (add-hook 'org-shiftleft-final-hook 'windmove-left)
