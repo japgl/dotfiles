@@ -53,6 +53,7 @@
 
 (setq password-cache t ; enable password caching
       password-cache-expiry 3600) ; for one hour
+
 ;;;;;
 ;; System integration
 (setenv "PATH" (concat (getenv "PATH") ":/usr/local/bin" ":~/bin")) ;; set paths to run files
@@ -167,12 +168,7 @@
   (paradox-enable) ; use paradox instead of normal package interface
   (setq paradox-execute-asynchronously t)) ; always execute async, never ask
 
-(use-package helm
-  :ensure t
-
-  :config
-  (ido-mode nil)
-  (helm-mode 1))
+(use-package helm :ensure t)
 
 (use-package helm-config
   :after helm
@@ -185,8 +181,12 @@
          :map helm-map
          (("<tab>" . helm-execute-persistent-action)))
 
-  :config (setq helm-mode-fuzzy-match t
-                helm-completion-in-region-fuzzy-match t))
+  :config
+  (setq ido-mode nil
+        helm-mode-fuzzy-match t
+        helm-completion-in-region-fuzzy-match t)
+
+  (helm-mode 1))
 
 (use-package exwm
   :ensure t)
@@ -197,7 +197,8 @@
   :config
   ;; Set the initial workspace number.
   (setq exwm-workspace-number 4
-        exwm-workspace-show-all-buffers t)
+        exwm-workspace-show-all-buffers t
+	 display-time-mode t)
   ;; Make class name the buffer name
   (add-hook 'exwm-update-class-hook
             (lambda ()
@@ -234,6 +235,12 @@
 
   (exwm-enable))
 
+(use-package enwc
+  :config (setq enwc-default-backend 'wicd
+                enwc-wired-device "enp0s10"
+                enwc-wireless-device "wlan0"))
+
+
 (use-package ispell
   :defer t
 
@@ -251,7 +258,7 @@
          ("<tab>" . completion-at-point))
 
   :config
-;;  (setq eshell-path-env (getenv "PATH"))
+  ;;  (setq eshell-path-env (getenv "PATH"))
 
   (defun eshell-here ()
     "Opens up a new shell in the directory associated with the
@@ -463,9 +470,9 @@ directory to make multiple eshell windows easier."
 
 (use-package org
   :bind (("C-c a" . org-agenda)
-	 :map org-mode-map
-              ("C-c g" . omlg-grab-link)
-              ("C-c p" . org-latex-export-to-pdf-async))
+         :map org-mode-map
+         ("C-c g" . omlg-grab-link)
+         ("C-c p" . org-latex-export-to-pdf-async))
 
   :config
   (defun org-latex-export-to-pdf-async ()
@@ -484,6 +491,7 @@ directory to make multiple eshell windows easier."
         org-export-html-style-include-default nil
         org-export-html-style "<link rel=\"stylesheet\" type=\"text/css\" href=\"org-style.css\" />"
         org-latex-pdf-process '("latexmk -pdflatex='pdflatex -interaction nonstopmode' -pdf -bibtex -f %f") ; this should get bibtex files working
+	org-agenda-files nil
         org-agenda-files '("~/org/master.org")
         org-log-repeat "note"
         org-publish-project-alist '(("html"
@@ -512,7 +520,7 @@ directory to make multiple eshell windows easier."
 
 (use-package olivetti
   :bind (("C-c C-o" . olivetti-mode))
-  
+
   :config (define-key olivetti-mode-map (kbd "C-c ]") nil))
 
 (use-package bibtex-mode
@@ -539,8 +547,6 @@ directory to make multiple eshell windows easier."
  '(custom-safe-themes
    (quote
     ("7f3ef7724515515443f961ef87fee655750512473b1f5bf890e2dc7e065f240c" "dc9a8d70c4f94a28aafc7833f8d05667601968e6c9bf998791c39fcb3e4679c9" "125fd2180e880802ae98b85f282b17f0aa8fa6cb9fc4f33d7fb19a38c40acef0" "65d9573b64ec94844f95e6055fe7a82451215f551c45275ca5b78653d505bc42" "5a970147df34752ed45bfdf0729233abfc085d9673ae7e40210c5e2d8f624b08" "f6a935e77513ba40014aa8467c35961fdb1fc936fa48407ed437083a7ad932de" "3eb2b5607b41ad8a6da75fe04d5f92a46d1b9a95a202e3f5369e2cdefb7aac5c" "6ae174add87509daef7a844174f4f985592d70ea05c3d82377ad0a38a380ae80" "e654ce0507ae5b2d7feeaef2c07354206781527941e7feb178c0a94be4a98e90" "3d0142352ce19c860047ad7402546944f84c270e84ae479beddbc2608268e0e5" "a33858123d3d3ca10c03c657693881b9f8810c9e242a62f1ad6380adf57b031c" "a40eac965142a2057269f8b2abd546b71a0e58e733c6668a62b1ad1aa7669220" default)))
- '(display-time-mode t)
- '(org-agenda-files nil)
  '(package-selected-packages
    (quote
     (enwc magit pcomplete-extension exwm gruvbox-theme define-word wc-mode org-ref helm olivetti org-bullets dashboard spinner dired+ dired-details dired-details+ dired-hacks-utils dired-ranger helm-config notmuch use-package paradox)))
