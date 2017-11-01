@@ -18,7 +18,7 @@
 ;;;;;
 ;; Nice defaults
 (setq inhibit-splash-screen nil
-      initial-major-mode 'org-mode
+      ;; initial-major-mode 'org-mode
       initial-scratch-message (format "%s\n" (shell-command-to-string "fortune"))
       large-file-warning-threshold nil
       locale-coding-system 'utf-8)
@@ -28,6 +28,12 @@
 (tool-bar-mode 0)
 
 (scroll-bar-mode 0)
+
+(fringe-mode 0)
+
+(setq display-time-default-load-average nil)
+
+(display-time-mode t)
 
 (global-visual-line-mode 1) ;; Line wrapping
 
@@ -49,9 +55,9 @@
       password-cache-expiry 3600) ; for one hour
 ;;;;;
 ;; System integration
-(setenv "PATH" (concat (getenv "PATH") ":/usr/local/bin"));; ":/usr/local/texlive/2016/bin/universal-darwin")) ;set paths to run files
+(setenv "PATH" (concat (getenv "PATH") ":/usr/local/bin" ":~/bin")) ;; set paths to run files
 
-(setq exec-path (append exec-path '("/usr/local/bin"));; "/usr/local/texlive/2016/bin/universal-darwin")))
+(setq exec-path (append exec-path '("/usr/local/bin" "~/bin"))
       backup-directory-alist `((".*" . ,temporary-file-directory)) ; Save backups to tmp dir
       auto-save-file-name-transforms `((".*" ,temporary-file-directory t))) ; Save autosaves to tmp dir
 
@@ -113,10 +119,15 @@
               100)
          '(90 . 50) '(100 . 100)))))
 
-;;(set-face-attribute 'default t :font "-unknown-DejaVu Sans Mono-normal-normal-normal-*-11-*-*-*-m-0-iso10646-1")
+(defun backward-kill-line (num)
+  "Kill NUM lines backward."
+  (interactive "p")
+  (kill-line (- 1 num)))
 
 ;;;;;
 ;; Global keybindings
+(global-set-key (kbd "<C-backspace>") 'backward-kill-line)
+
 (global-set-key (kbd "C-c c") 'comment-region)
 
 (global-set-key (kbd "C-c u") 'uncomment-region)
@@ -127,7 +138,7 @@
 
 (global-set-key (kbd "<tab>") 'completion-at-point)
 
-(global-set-key (kbd "s-i") 'indent-buffer)
+(global-set-key (kbd "C-c i") 'indent-buffer)
 
 (global-set-key (kbd "C-x M-i") 'open-init-file)
 
@@ -156,15 +167,76 @@
   (paradox-enable) ; use paradox instead of normal package interface
   (setq paradox-execute-asynchronously t)) ; always execute async, never ask
 
-;; (use-package exwm
-;;   :ensure t)
+(use-package helm
+  :ensure t
 
-;; (use-package exwm-config
-;;   :after exwm
+  :config
+  (ido-mode nil)
+  (helm-mode 1))
 
-;;   :config (exwm-config-default))
+(use-package helm-config
+  :after helm
+
+  :bind (("C-x b" . helm-buffers-list)
+         ("C-x C-f" . helm-find-files)
+         ("C-x r b" . helm-bookmarks)
+         ("M-x" . helm-M-x)
+         ("M-y" . helm-show-kill-ring)
+         :map helm-map
+         (("<tab>" . helm-execute-persistent-action)))
+
+  :config (setq helm-mode-fuzzy-match t
+                helm-completion-in-region-fuzzy-match t))
+
+(use-package exwm
+  :ensure t)
+
+(use-package exwm-config
+  :after exwm
+
+  :config
+  ;; Set the initial workspace number.
+  (setq exwm-workspace-number 4
+        exwm-workspace-show-all-buffers t)
+  ;; Make class name the buffer name
+  (add-hook 'exwm-update-class-hook
+            (lambda ()
+              (exwm-workspace-rename-buffer exwm-class-name)))
+  ;; 's-r': Reset
+  (exwm-input-set-key (kbd "s-r") #'exwm-reset)
+  ;; 's-f': Fullscreen
+  (exwm-input-set-key (kbd "s-f") #'exwm-layout-toggle-fullscreen)
+  ;; 's-w': Switch workspace
+  (exwm-input-set-key (kbd "s-w") #'exwm-workspace-switch)
+  ;; 's-N': Switch to certain workspace
+  (dotimes (i 10)
+    (exwm-input-set-key (kbd (format "s-%d" i))
+                        `(lambda ()
+                           (interactive)
+                           (exwm-workspace-switch-create ,i))))
+  ;; 's-&': Launch application
+  (exwm-input-set-key (kbd "s-SPC")
+                      (lambda (command)
+                        (interactive (list (read-shell-command "$ ")))
+                        (start-process-shell-command command nil command)))
+  ;; Line-editing shortcuts
+  (exwm-input-set-simulation-keys
+   '(([?\C-b] . left)
+     ([?\C-f] . right)
+     ([?\C-p] . up)
+     ([?\C-n] . down)
+     ([?\C-a] . home)
+     ([?\C-e] . end)
+     ([?\M-v] . prior)
+     ([?\C-v] . next)
+     ([?\C-d] . delete)
+     ([?\C-k] . (S-end delete))))
+
+  (exwm-enable))
 
 (use-package ispell
+  :defer t
+
   :config
   (setenv "DICTIONARY" "en_AU")
   (setq ispell-program-name "hunspell"))
@@ -174,10 +246,13 @@
 
 (use-package eshell
   :bind (("C-!" . eshell-here)
+         ("C-#" . eshell)
          :eshell-mode-map
          ("<tab>" . completion-at-point))
 
   :config
+;;  (setq eshell-path-env (getenv "PATH"))
+
   (defun eshell-here ()
     "Opens up a new shell in the directory associated with the
 current buffer's file. The eshell is renamed to match that
@@ -206,51 +281,42 @@ directory to make multiple eshell windows easier."
   (setq eshell-prefer-lisp-functions t
         eshell-prefer-lisp-variables t))
 
-(use-package doc-view
-  :bind (:map doc-view-mode-map
-              ("<C-mouse-4>" . doc-view-enlarge)
-              ("<C-mouse-5>" . doc-view-shrink)
-              ("g" . doc-view-goto-page))
+(use-package pcomplete-extension
+  :after eshell)
 
+;; (use-package doc-view
+;;   :bind (:map doc-view-mode-map
+;;               ("<C-mouse-4>" . doc-view-enlarge)
+;;               ("<C-mouse-5>" . doc-view-shrink)
+;;               ("g" . doc-view-goto-page))
+
+;;   :config
+;;   (setq doc-view-continuous nil
+;;         doc-view-resolution 500) ; slow, high res. docs. 5x default value
+
+;;   (add-hook 'doc-view-mode-hook 'auto-revert-mode)) ; Make doc-view auto refresh
+
+(use-package pdf-tools
   :config
-  (setq doc-view-continuous nil
-        doc-view-resolution 500) ; slow, high res. docs. 10x default value
-
-  (add-hook 'doc-view-mode-hook 'auto-revert-mode)) ; Make doc-view auto refresh
+  (pdf-tools-install)
+  (add-hook 'pdf-tools-mode-hook 'auto-revert-mode))
 
 (use-package tex-mode
-  :init
+  :disabled
+
+  :config
   (setq TeX-auto-save t
         TeX-parse-self t))
 
 (use-package LilyPond-mode
+  :disabled
+
   :bind (:map LilyPond-mode-map
               ("C-c p" . LilyPond-command-lilypond-and-view))
 
   :mode "\\.ly$"
 
   :config (add-hook 'LilyPond-mode-hook (lambda () (turn-on-font-lock))))
-
-(use-package helm
-  :ensure t
-
-  :config (helm-mode 1))
-
-(use-package helm-config
-  :after helm
-
-  :bind (("C-x b" . helm-buffers-list)
-         ("C-x C-f" . helm-find-files)
-         ("C-x r b" . helm-bookmarks)
-         ("M-x" . helm-M-x)
-         ("M-y" . helm-show-kill-ring)
-         :map helm-map
-         (("<tab>" . helm-execute-persistent-action)))
-
-  :config
-  (setq helm-mode-fuzzy-match t
-        helm-completion-in-region-fuzzy-match t))
-
 
 (use-package dired
   :bind (:map dired-mode-map
@@ -279,9 +345,9 @@ directory to make multiple eshell windows easier."
               ("/"   . isearch-forward) ;;isearch-forward)
               ("P"   . image-dired)
 
-              ("C"   . dired-rsync)
+              ("C"   . dired-rsync) ;; asynchronous copy with rsync
 
-              ("M-o" . dired-omit-mode))
+              ("M-o" . dired-omit-mode)) ;; this is not working for some reason
 
   :config
   (defun dired-open ()
@@ -396,34 +462,28 @@ directory to make multiple eshell windows easier."
   :bind (("C-x M-g" . magit-status)))
 
 (use-package org
-  :preface
+  :bind (("C-c a" . org-agenda)
+	 :map org-mode-map
+              ("C-c g" . omlg-grab-link)
+              ("C-c p" . org-latex-export-to-pdf-async))
+
+  :config
   (defun org-latex-export-to-pdf-async ()
     (interactive)
     (org-latex-export-to-pdf t))
 
-  :bind (:map org-mode-map
-              ("C-c a" . org-agenda)
-              ("C-c g" . omlg-grab-link)
-              ("C-c p" . org-latex-export-to-pdf-async ))
-
-  :config
-  (setq 
-
   (setq-default org-startup-indented t) ;; Start org mode in indented mode
-
-  ;;  (setq org-hide-emphasis-markers t)    ;; Fix italics
 
   (font-lock-add-keywords 'org-mode     ;; Unicode bullet points
                           '(("^ +\\([-*]\\) "
                              (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
 
-  ;;  (require 'org-bullets)                ;; Better header bullets
-
   (setq org-hide-leading-stars t
+        ;; org-hide-emphasis-markers t ;; Hide italics marks
         org-export-html-style-include-scripts nil
         org-export-html-style-include-default nil
         org-export-html-style "<link rel=\"stylesheet\" type=\"text/css\" href=\"org-style.css\" />"
-	org-latex-pdf-process '("latexmk -pdflatex='pdflatex -interaction nonstopmode' -pdf -bibtex -f %f") ; this should get bibtex files working
+        org-latex-pdf-process '("latexmk -pdflatex='pdflatex -interaction nonstopmode' -pdf -bibtex -f %f") ; this should get bibtex files working
         org-agenda-files '("~/org/master.org")
         org-log-repeat "note"
         org-publish-project-alist '(("html"
@@ -446,7 +506,14 @@ directory to make multiple eshell windows easier."
   (add-hook 'org-shiftright-final-hook 'windmove-right))
 
 (use-package org-ref
+  :after org
+
   :config (setq bibtex-dialect 'biblatex))
+
+(use-package olivetti
+  :bind (("C-c C-o" . olivetti-mode))
+  
+  :config (define-key olivetti-mode-map (kbd "C-c ]") nil))
 
 (use-package bibtex-mode
   :bind (:map bibtex-mode-map
@@ -471,11 +538,12 @@ directory to make multiple eshell windows easier."
  '(custom-enabled-themes (quote (wheatgrass)))
  '(custom-safe-themes
    (quote
-    ("3eb2b5607b41ad8a6da75fe04d5f92a46d1b9a95a202e3f5369e2cdefb7aac5c" "6ae174add87509daef7a844174f4f985592d70ea05c3d82377ad0a38a380ae80" "e654ce0507ae5b2d7feeaef2c07354206781527941e7feb178c0a94be4a98e90" "3d0142352ce19c860047ad7402546944f84c270e84ae479beddbc2608268e0e5" "a33858123d3d3ca10c03c657693881b9f8810c9e242a62f1ad6380adf57b031c" "a40eac965142a2057269f8b2abd546b71a0e58e733c6668a62b1ad1aa7669220" default)))
+    ("7f3ef7724515515443f961ef87fee655750512473b1f5bf890e2dc7e065f240c" "dc9a8d70c4f94a28aafc7833f8d05667601968e6c9bf998791c39fcb3e4679c9" "125fd2180e880802ae98b85f282b17f0aa8fa6cb9fc4f33d7fb19a38c40acef0" "65d9573b64ec94844f95e6055fe7a82451215f551c45275ca5b78653d505bc42" "5a970147df34752ed45bfdf0729233abfc085d9673ae7e40210c5e2d8f624b08" "f6a935e77513ba40014aa8467c35961fdb1fc936fa48407ed437083a7ad932de" "3eb2b5607b41ad8a6da75fe04d5f92a46d1b9a95a202e3f5369e2cdefb7aac5c" "6ae174add87509daef7a844174f4f985592d70ea05c3d82377ad0a38a380ae80" "e654ce0507ae5b2d7feeaef2c07354206781527941e7feb178c0a94be4a98e90" "3d0142352ce19c860047ad7402546944f84c270e84ae479beddbc2608268e0e5" "a33858123d3d3ca10c03c657693881b9f8810c9e242a62f1ad6380adf57b031c" "a40eac965142a2057269f8b2abd546b71a0e58e733c6668a62b1ad1aa7669220" default)))
+ '(display-time-mode t)
  '(org-agenda-files nil)
  '(package-selected-packages
    (quote
-    (magit pcomplete-extension exwm gruvbox-theme define-word wc-mode org-ref helm olivetti org-bullets dashboard spinner dired+ dired-details dired-details+ dired-hacks-utils dired-ranger helm-config notmuch use-package paradox)))
+    (enwc magit pcomplete-extension exwm gruvbox-theme define-word wc-mode org-ref helm olivetti org-bullets dashboard spinner dired+ dired-details dired-details+ dired-hacks-utils dired-ranger helm-config notmuch use-package paradox)))
  '(paradox-github-token t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

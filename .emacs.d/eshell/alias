@@ -7,8 +7,8 @@ alias aur sudo apt-get autoremove
 alias d dired $*
 alias df df -h
 alias ff find-file $*
-alias l ls -alh
-alias ping ping -c 3 $*
+alias l ls -alh $*
+alias ping ping -c3 $*
 alias pingle ping www.google.com
 alias q exit
 alias rc rsync -Prh $*
