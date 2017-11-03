@@ -35,7 +35,7 @@
 
 (display-time-mode t)
 
-(global-visual-line-mode 1) ;; Line wrapping
+(global-visual-line-mode 1) ; Line wrapping
 
 (set-terminal-coding-system 'utf-8)
 
@@ -56,7 +56,7 @@
 
 ;;;;;
 ;; System integration
-(setenv "PATH" (concat (getenv "PATH") ":/usr/local/bin" ":~/bin")) ;; set paths to run files
+(setenv "PATH" (concat (getenv "PATH") ":/usr/local/bin" ":~/bin")) ; set paths to run files
 
 (setq exec-path (append exec-path '("/usr/local/bin" "~/bin"))
       backup-directory-alist `((".*" . ,temporary-file-directory)) ; Save backups to tmp dir
@@ -115,8 +115,7 @@
      nil 'alpha
      (if (eql (cond ((numberp alpha) alpha)
                     ((numberp (cdr alpha)) (cdr alpha))
-                    ;; Also handle undocumented (<active> <inactive>) form.
-                    ((numberp (cadr alpha)) (cadr alpha)))
+                    ((numberp (cadr alpha)) (cadr alpha))) ; Also handle undocumented (<active> <inactive>) form.
               100)
          '(90 . 50) '(100 . 100)))))
 
@@ -133,21 +132,19 @@
 
 (global-set-key (kbd "C-c u") 'uncomment-region)
 
-(global-set-key (kbd "<C-tab>") 'cycle-windows)
-
 (global-set-key (kbd "<RET>") 'newline-and-indent)
 
 (global-set-key (kbd "<tab>") 'completion-at-point)
 
 (global-set-key (kbd "C-c i") 'indent-buffer)
 
-(global-set-key (kbd "C-x M-i") 'open-init-file)
+(global-set-key (kbd "C-c M-c") 'open-init-file)
 
 (global-set-key (kbd "C-x M-k") 'save-and-kill)
 
-(global-set-key (kbd "C-x M-l") 'load-this-file)
+(global-set-key (kbd "C-c C-k") 'load-this-file)
 
-(global-set-key (kbd "C-x M-r") 'run-this-file)
+(global-set-key (kbd "C-c M-r") 'run-this-file)
 
 (global-set-key (kbd "C-c t") 'toggle-transparency)
 
@@ -188,40 +185,38 @@
 
   (helm-mode 1))
 
-(use-package exwm
-  :ensure t)
+(use-package exwm :ensure t)
 
 (use-package exwm-config
   :after exwm
 
   :config
-  ;; Set the initial workspace number.
-  (setq exwm-workspace-number 4
+  (setq exwm-workspace-number 4 ; Set the initial workspace number.
         exwm-workspace-show-all-buffers t
-	 display-time-mode t)
-  ;; Make class name the buffer name
-  (add-hook 'exwm-update-class-hook
+        display-time-mode t)
+
+  (add-hook 'exwm-update-class-hook ; Make class name the buffer name
             (lambda ()
               (exwm-workspace-rename-buffer exwm-class-name)))
-  ;; 's-r': Reset
-  (exwm-input-set-key (kbd "s-r") #'exwm-reset)
-  ;; 's-f': Fullscreen
-  (exwm-input-set-key (kbd "s-f") #'exwm-layout-toggle-fullscreen)
-  ;; 's-w': Switch workspace
-  (exwm-input-set-key (kbd "s-w") #'exwm-workspace-switch)
-  ;; 's-N': Switch to certain workspace
-  (dotimes (i 10)
+
+  (exwm-input-set-key (kbd "s-r") #'exwm-reset) ; 's-r': Reset
+
+  (exwm-input-set-key (kbd "s-f") #'exwm-layout-toggle-fullscreen) ; 's-f': Fullscreen
+
+  (exwm-input-set-key (kbd "s-w") #'exwm-workspace-switch) ; 's-w': Switch workspace
+
+  (dotimes (i 10) ; 's-N': Switch to certain workspace
     (exwm-input-set-key (kbd (format "s-%d" i))
                         `(lambda ()
                            (interactive)
                            (exwm-workspace-switch-create ,i))))
-  ;; 's-&': Launch application
-  (exwm-input-set-key (kbd "s-SPC")
+
+  (exwm-input-set-key (kbd "s-SPC") ; 's-&': Launch application
                       (lambda (command)
                         (interactive (list (read-shell-command "$ ")))
                         (start-process-shell-command command nil command)))
-  ;; Line-editing shortcuts
-  (exwm-input-set-simulation-keys
+
+  (exwm-input-set-simulation-keys ; Line-editing shortcuts
    '(([?\C-b] . left)
      ([?\C-f] . right)
      ([?\C-p] . up)
@@ -235,11 +230,19 @@
 
   (exwm-enable))
 
-(use-package enwc
-  :config (setq enwc-default-backend 'wicd
-                enwc-wired-device "enp0s10"
-                enwc-wireless-device "wlan0"))
+;; (use-package enwc
+;;   :config (setq enwc-default-backend 'wicd
+;;                 enwc-wired-device "enp0s10"
+;;                 enwc-wireless-device "wlan0"))
 
+(use-package olivetti
+  :bind (("C-c C-o" . olivetti-mode))
+
+  :config (define-key olivetti-mode-map (kbd "C-c ]") nil))
+
+(use-package define-word
+  :bind (("C-c d" . define-word-at-point)
+         ("C-c D" . define-word)))
 
 (use-package ispell
   :defer t
@@ -248,8 +251,7 @@
   (setenv "DICTIONARY" "en_AU")
   (setq ispell-program-name "hunspell"))
 
-(use-package elisp-mode
-  :bind (("C-c C-k" . load-this-file)))
+(use-package elisp-mode)
 
 (use-package eshell
   :bind (("C-!" . eshell-here)
@@ -275,38 +277,26 @@ directory to make multiple eshell windows easier."
       (eshell "new")
       (rename-buffer (concat "*eshell: " name "*"))))
 
-  (add-hook 'eshell-mode-hook
+  (add-hook 'eshell-mode-hook ; work with helm pcomplete
             (lambda ()
               (eshell-cmpl-initialize)
               (define-key eshell-mode-map [remap eshell-pcomplete] 'helm-esh-pcomplete)
               (define-key eshell-mode-map (kbd "M-p") 'helm-eshell-history))))
 
-(use-package em-tramp
+(use-package em-tramp ; use for TRAMP sudo instead of regular
   :after eshell
 
   :config
   (setq eshell-prefer-lisp-functions t
         eshell-prefer-lisp-variables t))
 
-(use-package pcomplete-extension
-  :after eshell)
-
-;; (use-package doc-view
-;;   :bind (:map doc-view-mode-map
-;;               ("<C-mouse-4>" . doc-view-enlarge)
-;;               ("<C-mouse-5>" . doc-view-shrink)
-;;               ("g" . doc-view-goto-page))
-
-;;   :config
-;;   (setq doc-view-continuous nil
-;;         doc-view-resolution 500) ; slow, high res. docs. 5x default value
-
-;;   (add-hook 'doc-view-mode-hook 'auto-revert-mode)) ; Make doc-view auto refresh
+(use-package pcomplete-extension :after eshell) ; add more completion to eshell
 
 (use-package pdf-tools
   :config
   (pdf-tools-install)
-  (add-hook 'pdf-tools-mode-hook 'auto-revert-mode))
+
+  (add-hook 'pdf-tools-mode-hook 'auto-revert-mode)) ; reload the document automatically
 
 (use-package tex-mode
   :disabled
@@ -491,7 +481,7 @@ directory to make multiple eshell windows easier."
         org-export-html-style-include-default nil
         org-export-html-style "<link rel=\"stylesheet\" type=\"text/css\" href=\"org-style.css\" />"
         org-latex-pdf-process '("latexmk -pdflatex='pdflatex -interaction nonstopmode' -pdf -bibtex -f %f") ; this should get bibtex files working
-	org-agenda-files nil
+        org-agenda-files nil
         org-agenda-files '("~/org/master.org")
         org-log-repeat "note"
         org-publish-project-alist '(("html"
@@ -518,18 +508,9 @@ directory to make multiple eshell windows easier."
 
   :config (setq bibtex-dialect 'biblatex))
 
-(use-package olivetti
-  :bind (("C-c C-o" . olivetti-mode))
-
-  :config (define-key olivetti-mode-map (kbd "C-c ]") nil))
-
 (use-package bibtex-mode
   :bind (:map bibtex-mode-map
               ("C-c d" . doi-utils-add-bibtex-entry-from-doi)))
-
-(use-package define-word
-  :bind (("C-c d" . define-word-at-point)
-         ("C-c D" . define-word)))
 
 (use-package ledger-mode
   :init (setq ledger-clear-whole-transactions 1)
