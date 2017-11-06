@@ -211,7 +211,7 @@
                            (interactive)
                            (exwm-workspace-switch-create ,i))))
 
-  (exwm-input-set-key (kbd "s-SPC") ; 's-&': Launch application
+  (exwm-input-set-key (kbd "s-SPC") ; 's-space': Launch application
                       (lambda (command)
                         (interactive (list (read-shell-command "$ ")))
                         (start-process-shell-command command nil command)))
